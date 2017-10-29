@@ -1,0 +1,111 @@
+(ns clj-mandelbrot-javafx.core
+  (:require [fn-fx.fx-dom :as dom]
+            [fn-fx.controls :as controls]
+            [fn-fx.diff :refer [component defui render should-update?]]
+            [fn-fx.util :as util]))
+
+(def initial-state
+  {:root-stage? true
+   :data [[]]
+   :pos {:x-min -1 :x-max 2
+         :y-min -1 :y-max 1}})
+
+(defn force-exit [root-stage?]
+  (reify javafx.event.EventHandler
+    (handle [this event]
+      (when-not root-stage?
+        (println "Closing application")
+        (javafx.application.Platform/exit)))))
+
+(defmulti handle-event (fn [_ {:keys [event]}]
+                         event))
+
+(defmethod handle-event :reset
+  [_ {:keys [root-stage?]}]
+  (assoc initial-state :root-stage? root-stage?))
+
+(defui Stage
+  (render [this {:keys [root-stage? data pos] :as state}]
+          (controls/stage
+           :title "Fractals: Mandelbrot"
+           :on-close-request (force-exit root-stage?)
+           :shown true
+           :scene (controls/scene
+                   :root (controls/border-pane
+                          :top (controls/h-box
+                                :padding (javafx.geometry.Insets. 15 12 15 12)
+                                :spacing 80
+                                :alignment (javafx.geometry.Pos/CENTER)
+                                :children [(controls/grid-pane
+                                            :alignment (javafx.geometry.Pos/CENTER)
+                                            :hgap 10
+                                            :vgap 10
+                                            :padding (javafx.geometry.Insets. 0 10 0 10)
+                                            :children [(controls/text
+                                                        :text (str "x-min: " (:x-min pos))
+                                                        :font (controls/font
+                                                               :family "Verdana"
+                                                               :weight :normal
+                                                               :size 15)
+                                                        :grid-pane/column-index 0
+                                                        :grid-pane/row-index 0)
+                                                       (controls/text
+                                                        :text (str "x-max: " (:x-max pos))
+                                                        :font (controls/font
+                                                               :family "Verdana"
+                                                               :weight :normal
+                                                               :size 15)
+                                                        :grid-pane/column-index 0
+                                                        :grid-pane/row-index 1)
+                                                       (controls/text
+                                                        :text (str "y-min: " (:y-min pos))
+                                                        :font (controls/font
+                                                               :family "Verdana"
+                                                               :weight :normal
+                                                               :size 15)
+                                                        :grid-pane/column-index 1
+                                                        :grid-pane/row-index 0)
+                                                       (controls/text
+                                                        :text (str "y-max: " (:y-max pos))
+                                                        :font (controls/font
+                                                               :family "Verdana"
+                                                               :weight :normal
+                                                               :size 15)
+                                                        :grid-pane/column-index 1
+                                                        :grid-pane/row-index 1)])
+                                           (controls/color-picker
+                                            :value (javafx.scene.paint.Color/CORAL))
+                                           (controls/button 
+                                            :text (str "+"))
+                                           (controls/button
+                                            :text (str "-"))
+                                           ])
+                          :center (controls/canvas
+                                   :width 900
+                                   :height 600))))))
+
+
+(defonce data-state (atom initial-state))
+
+(defn start
+  ([] (start {:root-stage? true}))
+  ([{:keys [root-stage?]}]
+   (swap! data-state assoc :root-stage? root-stage?)
+   (let [handler-fn (fn [event]
+                      (println event)
+                      (try
+                        (swap! data-state handle-event event)
+                        (catch Throwable exception
+                          (println exception))))
+         ui-state (agent (dom/app (stage @data-state )
+                                  handler-fn))]
+     (add-watch
+      data-state :ui
+      (fn [_ _ _ _]
+        (send ui-state
+              (fn [old-ui]
+                (println "-- State Updated --")
+                (println @data-state)
+                (dom/update-app old-ui
+                                (stage @data-state))))))))
+  )
