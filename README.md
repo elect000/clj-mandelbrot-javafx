@@ -7,7 +7,7 @@ FIXME: description
 Download from http://example.com/FIXME.
 
 ## Usage
-
+This command cannot do because of API which I use
 FIXME: explanation
 
     $ java -jar clj-mandelbrot-javafx-0.1.0-standalone.jar [args]
