@@ -1,20 +1,23 @@
 # clj-mandelbrot-javafx
 
-FIXME: description
+Failed Project
 
 ## Installation
 
-Download from http://example.com/FIXME.
+
 
 ## Usage
 This command cannot do because of API which I use
-FIXME: explanation
 
     $ java -jar clj-mandelbrot-javafx-0.1.0-standalone.jar [args]
 
+So, if you use this...    
+
+    $ lein run
+    
 ## Options
 
-FIXME: listing of options this app accepts.
+
 
 ## Examples
 
